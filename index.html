@@ -3,575 +3,511 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Status Admin Panel</title>
+    <title>Status Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; }
-        .sidebar-item:hover { background: #f1f5f9; color: #2563eb; }
-        .sidebar-item.active { background: #2563eb; color: white; }
-        .loader { border-top-color: #3498db; animation: spinner 1.5s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; background: #f4f7fe; color: #1e293b; }
+        .active-tab { background: #2563eb; color: white; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3); }
+        .loader { border-top-color: #2563eb; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-gray-50">
+<body>
 
-    <!-- AUTHENTICATION OVERLAY -->
-    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 p-4">
-        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 border border-slate-700/10">
-            <div class="text-center mb-10">
-                <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-blue-500/20">
-                    <i class="fas fa-lock text-white text-2xl"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-900">Administrative Access</h2>
-                <p class="text-gray-500 mt-2 text-sm">Please enter your authorized pass key</p>
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 p-6">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 text-center">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <i class="fas fa-key text-white text-3xl"></i>
             </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Admin Login</h2>
+            <p class="text-gray-500 mb-8">Enter your secret pass key to continue</p>
             
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Pass Key</label>
-                    <input type="password" id="login-passkey" placeholder="••••••••••••" 
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-gray-300">
-                </div>
-                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all transform active:scale-[0.98] shadow-lg shadow-blue-500/25">
-                    Authenticate
+            <div class="space-y-4">
+                <input type="password" id="login-passkey" placeholder="Enter Pass Key" 
+                    class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg">
+                    Login Now
                 </button>
-                <p id="login-error" class="text-red-500 text-xs text-center hidden font-medium">Authentication failed. Invalid pass key.</p>
+                <p id="login-error" class="text-red-500 text-sm hidden">Wrong Pass Key! Try again.</p>
             </div>
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD LAYOUT -->
-    <div id="app-content" class="hidden min-h-screen flex">
+    <!-- MAIN APP -->
+    <div id="app-content" class="hidden min-h-screen flex flex-col md:flex-row">
         
-        <!-- Navigation Sidebar -->
-        <aside class="w-72 bg-white border-r border-gray-200 hidden lg:flex flex-col">
-            <div class="p-8">
-                <div class="flex items-center gap-3">
-                    <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-2.5 rounded-xl text-white shadow-lg shadow-blue-500/30">
-                        <i class="fas fa-cube"></i>
-                    </div>
-                    <span class="font-extrabold text-xl text-gray-900 tracking-tight">SystemCore</span>
+        <!-- SIDEBAR -->
+        <aside class="w-full md:w-64 bg-white border-r border-gray-200 p-6 flex flex-col gap-2">
+            <div class="flex items-center gap-3 mb-10 px-2">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+                    <i class="fas fa-bolt"></i>
                 </div>
+                <span class="font-bold text-xl">Admin</span>
             </div>
             
-            <nav class="flex-1 px-6 space-y-2 mt-4">
-                <button onclick="switchTab('dashboard')" class="sidebar-item active w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all text-sm">
-                    <i class="fas fa-grid-2 w-5 opacity-70 text-center"></i> Analytics Overview
-                </button>
-                <button onclick="switchTab('categories')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all text-sm text-gray-500">
-                    <i class="fas fa-folder-tree w-5 opacity-70 text-center"></i> Category Engine
-                </button>
-                
-                <div class="pt-8 pb-3 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Management</div>
-                
-                <button onclick="switchTab('add-status')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all text-sm text-gray-500">
-                    <i class="fas fa-plus-square w-5 opacity-70 text-center"></i> Deploy Content
-                </button>
-                <button onclick="switchTab('manage')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all text-sm text-gray-500">
-                    <i class="fas fa-list-check w-5 opacity-70 text-center"></i> Inventory Control
-                </button>
-            </nav>
+            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-gray-600 hover:bg-gray-50 transition-all">
+                <i class="fas fa-chart-pie w-5"></i> Dashboard
+            </button>
+            <button onclick="switchTab('categories')" id="btn-categories" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-gray-600 hover:bg-gray-50 transition-all">
+                <i class="fas fa-folder w-5"></i> Category List
+            </button>
+            <button onclick="switchTab('add-status')" id="btn-add-status" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-gray-600 hover:bg-gray-50 transition-all">
+                <i class="fas fa-plus-circle w-5"></i> Add One
+            </button>
+            <button onclick="switchTab('bulk-upload')" id="btn-bulk-upload" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-gray-600 hover:bg-gray-50 transition-all">
+                <i class="fas fa-layer-group w-5"></i> Bulk Upload
+            </button>
+            <button onclick="switchTab('manage')" id="btn-manage" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-gray-600 hover:bg-gray-50 transition-all">
+                <i class="fas fa-images w-5"></i> All Status
+            </button>
 
-            <div class="p-6 border-t border-gray-100">
-                <button onclick="logout()" class="w-full flex items-center justify-between px-4 py-3 text-red-500 font-bold rounded-xl hover:bg-red-50 transition-all text-xs uppercase tracking-wider">
-                    Terminals Session <i class="fas fa-power-off"></i>
+            <div class="mt-auto pt-6 border-t border-gray-100">
+                <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all">
+                    <i class="fas fa-power-off w-5"></i> Logout
                 </button>
             </div>
         </aside>
 
-        <!-- Main Content Viewport -->
-        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <!-- Global Header -->
-            <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 h-20 flex items-center justify-between px-10 sticky top-0 z-10">
-                <div>
-                    <h1 id="page-title" class="text-lg font-bold text-gray-900 capitalize tracking-tight">Overview</h1>
-                    <p class="text-xs text-gray-400 font-medium">Server Health: Optimal</p>
-                </div>
-                <div class="flex items-center gap-5">
-                    <div class="text-right">
-                        <p class="text-sm font-bold text-gray-900">Administrator</p>
-                        <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">Verified Session</p>
-                    </div>
-                    <div class="relative">
-                        <img src="https://ui-avatars.com/api/?name=Admin&background=2563eb&color=fff&bold=true" class="w-11 h-11 rounded-2xl border-2 border-white shadow-md">
-                        <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Scrollable Viewport -->
-            <div class="flex-1 overflow-y-auto p-10 no-scrollbar" id="tab-container">
+        <!-- CONTENT -->
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+            
+            <!-- DASHBOARD -->
+            <div id="tab-dashboard" class="space-y-8">
+                <h2 class="text-3xl font-bold">Dashboard</h2>
                 
-                <!-- ANALYTICS TAB -->
-                <div id="tab-dashboard" class="space-y-10">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all">
-                            <div class="flex items-center justify-between mb-6">
-                                <div class="bg-blue-50 text-blue-600 p-3.5 rounded-2xl"><i class="fas fa-photo-film"></i></div>
-                                <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded">LIVE</span>
-                            </div>
-                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Total Assets</h3>
-                            <p class="text-3xl font-black text-gray-900 mt-2" id="stat-total">0</p>
-                        </div>
-                        <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
-                            <div class="flex items-center justify-between mb-6">
-                                <div class="bg-indigo-50 text-indigo-600 p-3.5 rounded-2xl"><i class="fas fa-sitemap"></i></div>
-                            </div>
-                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Active Nodes</h3>
-                            <p class="text-3xl font-black text-gray-900 mt-2" id="stat-categories">0</p>
-                        </div>
-                        <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
-                            <div class="flex items-center justify-between mb-6">
-                                <div class="bg-rose-50 text-rose-600 p-3.5 rounded-2xl"><i class="fas fa-bolt"></i></div>
-                            </div>
-                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">User Reactions</h3>
-                            <p class="text-3xl font-black text-gray-900 mt-2" id="stat-likes">0</p>
-                        </div>
-                        <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
-                            <div class="flex items-center justify-between mb-6">
-                                <div class="bg-emerald-50 text-emerald-600 p-3.5 rounded-2xl"><i class="fas fa-download"></i></div>
-                            </div>
-                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Distributions</h3>
-                            <p class="text-3xl font-black text-gray-900 mt-2" id="stat-downloads">0</p>
-                        </div>
+                <!-- Counter Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <p class="text-gray-400 text-sm font-medium">Total Status</p>
+                        <p class="text-3xl font-bold mt-1" id="stat-total">0</p>
                     </div>
-
-                    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-                            <div>
-                                <h2 class="font-black text-gray-900 uppercase tracking-tighter text-sm flex items-center gap-2">
-                                    <span class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span> Trending Performance
-                                </h2>
-                                <p class="text-[10px] text-gray-400 font-bold mt-1">TOP 5 PERFORMING ASSETS</p>
-                            </div>
-                            <button onclick="switchTab('manage')" class="text-blue-600 text-xs font-bold hover:bg-blue-50 px-4 py-2 rounded-lg transition-all">VIEW INVENTORY</button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50/50 text-gray-400 text-[10px] font-black uppercase tracking-widest">
-                                    <tr>
-                                        <th class="px-8 py-5">Asset Identification</th>
-                                        <th class="px-8 py-5 text-center">Reach</th>
-                                        <th class="px-8 py-5 text-center">Sentiment</th>
-                                        <th class="px-8 py-5">Class</th>
-                                        <th class="px-8 py-5 text-right">Metrics</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="most-downloaded-table-body" class="divide-y divide-gray-50 text-sm">
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <p class="text-gray-400 text-sm font-medium">Total Categories</p>
+                        <p class="text-3xl font-bold mt-1" id="stat-categories">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <p class="text-gray-400 text-sm font-medium">Total Likes</p>
+                        <p class="text-3xl font-bold mt-1" id="stat-likes">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <p class="text-gray-400 text-sm font-medium">Total Downloads</p>
+                        <p class="text-3xl font-bold mt-1" id="stat-downloads">0</p>
                     </div>
                 </div>
 
-                <!-- CATEGORY ENGINE TAB -->
-                <div id="tab-categories" class="hidden space-y-8">
-                    <div class="flex flex-col xl:flex-row gap-8">
-                        <div class="xl:w-80 shrink-0">
-                            <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-                                <h2 class="text-lg font-black text-gray-900 mb-6 tracking-tight">New Node</h2>
-                                <form id="category-form" class="space-y-5">
-                                    <div>
-                                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Display Name</label>
-                                        <input type="text" id="cat-name" required placeholder="Nature" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Icon Endpoint</label>
-                                        <input type="text" id="cat-icon" placeholder="https://cdn..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Metadata Description</label>
-                                        <textarea id="cat-desc" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"></textarea>
-                                    </div>
-                                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all text-sm uppercase tracking-wider">
-                                        Register Category
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        <div class="flex-1">
-                            <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-                                <div class="p-6 border-b border-gray-50 bg-gray-50/50">
-                                    <h2 class="font-bold text-gray-900 text-xs uppercase tracking-widest">Active Architecture</h2>
-                                </div>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-left">
-                                        <thead class="text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                                            <tr>
-                                                <th class="px-8 py-4">UID</th>
-                                                <th class="px-8 py-4">Node Name</th>
-                                                <th class="px-8 py-4">Status</th>
-                                                <th class="px-8 py-4 text-right">Ops</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="categories-table-body" class="divide-y divide-gray-50 text-sm">
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                <!-- Most Downloaded List -->
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-50 flex justify-between items-center">
+                        <h3 class="font-bold text-lg">Most Downloaded</h3>
+                        <span class="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full uppercase">Top 10</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-gray-500 text-xs uppercase font-bold">
+                                <tr>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4">Type</th>
+                                    <th class="px-6 py-4">Likes</th>
+                                    <th class="px-6 py-4">Downloads</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-downloaded-body" class="divide-y divide-gray-50">
+                                <!-- List items loaded here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+            </div>
 
-                <!-- CONTENT DEPLOYMENT TAB -->
-                <div id="tab-add-status" class="hidden max-w-3xl mx-auto">
-                    <div class="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                        <div class="mb-10">
-                            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Deploy New Asset</h2>
-                            <p class="text-gray-400 text-sm mt-1">Configure asset parameters for production environment.</p>
-                        </div>
-                        
-                        <form id="status-form" class="space-y-8">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                                <div class="md:col-span-2">
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Asset Title</label>
-                                    <input type="text" id="form-title" required class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category Assignment</label>
-                                    <select id="form-category-select" required class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold appearance-none">
-                                        <option value="">Select Node</option>
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Media Class</label>
-                                    <select id="form-type" onchange="toggleThumbVisibility()" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
-                                        <option value="image">Still Image (JPG/PNG)</option>
-                                        <option value="video">Motion Video (MP4)</option>
-                                    </select>
-                                </div>
-
-                                <div class="md:col-span-2">
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Source URL (Primary File)</label>
-                                    <input type="text" id="form-file-url" placeholder="https://storage.provider.com/asset.mp4" required class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold font-mono">
-                                </div>
-
-                                <!-- Dynamic Thumbnail Group -->
-                                <div class="md:col-span-2" id="thumb-wrapper">
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Poster Endpoint (Required for Video)</label>
-                                    <input type="text" id="form-thumb-url" placeholder="https://..." class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold font-mono">
-                                    <p class="text-[10px] text-gray-400 mt-2 italic">* For images, Source URL is automatically inherited as the poster.</p>
-                                </div>
-
-                                <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Runtime (Seconds)</label>
-                                    <input type="number" id="form-duration" value="0" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Storage Footprint (KB)</label>
-                                    <input type="number" id="form-size" value="0" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
-                                </div>
-                            </div>
-                            
-                            <div class="pt-6">
-                                <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-500/30 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em]">
-                                    <i class="fas fa-rocket"></i> Finalize Deployment
-                                </button>
-                            </div>
+            <!-- CATEGORY LIST -->
+            <div id="tab-categories" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-3xl font-bold">Category List</h2>
+                </div>
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="lg:w-1/3 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-fit">
+                        <h3 class="font-bold mb-6">Create Category</h3>
+                        <form id="category-form" class="space-y-4">
+                            <input type="text" id="cat-name" placeholder="Name (e.g. Love)" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500">
+                            <input type="text" id="cat-icon" placeholder="Icon Image URL" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500">
+                            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md">Add Category</button>
                         </form>
                     </div>
-                </div>
-
-                <!-- INVENTORY CONTROL TAB -->
-                <div id="tab-manage" class="hidden">
-                    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm">
-                        <div class="p-8 flex items-center justify-between border-b border-gray-50">
-                            <div class="relative w-96">
-                                <i class="fas fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                                <input type="text" placeholder="Search Inventory Registry..." class="w-full pl-12 pr-6 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                            </div>
-                            <button onclick="fetchStatuses()" class="p-3 text-gray-400 hover:text-blue-600 bg-gray-50 rounded-xl transition-all">
-                                <i class="fas fa-rotate"></i>
-                            </button>
-                        </div>
-                        <div id="manage-grid" class="p-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                            <!-- Cards inject here -->
-                        </div>
+                    <div class="flex-1 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th class="px-6 py-4 font-bold text-sm">Name</th>
+                                    <th class="px-6 py-4 font-bold text-sm text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categories-table-body" class="divide-y divide-gray-50"></tbody>
+                        </table>
                     </div>
                 </div>
-
             </div>
+
+            <!-- ADD ONE STATUS -->
+            <div id="tab-add-status" class="hidden max-w-2xl mx-auto space-y-8">
+                <h2 class="text-3xl font-bold text-center">Add New Status</h2>
+                <form id="status-form" class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold mb-2">Status Title</label>
+                        <input type="text" id="form-title" placeholder="Enter title" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Category</label>
+                            <select id="form-category-select" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Type</label>
+                            <select id="form-type" onchange="toggleThumb()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500">
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2">File Link (Source)</label>
+                        <input type="text" id="form-file-url" placeholder="https://..." required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500">
+                    </div>
+                    <div id="thumb-input-area" class="hidden">
+                        <label class="block text-sm font-bold mb-2">Thumbnail Link (Poster)</label>
+                        <input type="text" id="form-thumb-url" placeholder="https://..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500">
+                    </div>
+                    <button type="submit" id="submit-btn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg">Upload Status</button>
+                </form>
+            </div>
+
+            <!-- BULK UPLOAD STATUS -->
+            <div id="tab-bulk-upload" class="hidden max-w-2xl mx-auto space-y-8">
+                <h2 class="text-3xl font-bold text-center">Bulk Upload</h2>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Select Category</label>
+                            <select id="bulk-category-select" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Media Type</label>
+                            <select id="bulk-type" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500">
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2">Paste Links (One link per line)</label>
+                        <textarea id="bulk-links" rows="10" placeholder="https://site.com/link1.jpg&#10;https://site.com/link2.jpg" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500 font-mono text-xs"></textarea>
+                    </div>
+                    <div id="bulk-progress" class="hidden">
+                        <div class="flex justify-between mb-1 text-xs font-bold">
+                            <span>Uploading...</span>
+                            <span id="bulk-count">0/0</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                            <div id="bulk-bar" class="bg-blue-600 h-full w-0 transition-all"></div>
+                        </div>
+                    </div>
+                    <button onclick="startBulkUpload()" id="bulk-btn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2">
+                        <i class="fas fa-upload"></i> Start Bulk Upload
+                    </button>
+                </div>
+            </div>
+
+            <!-- ALL STATUS -->
+            <div id="tab-manage" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-3xl font-bold">All Status</h2>
+                    <button onclick="fetchStatuses()" class="bg-white p-3 rounded-xl border border-gray-200 hover:text-blue-600"><i class="fas fa-sync"></i></button>
+                </div>
+                <div id="manage-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+            </div>
+
         </main>
     </div>
 
-    <!-- NOTIFICATION SYSTEM -->
-    <div id="toast" class="fixed bottom-10 right-10 transform translate-y-32 opacity-0 transition-all duration-500 pointer-events-none z-[100]">
-        <div class="bg-gray-900/95 backdrop-blur-lg text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
-            <div id="toast-icon-bg" class="w-8 h-8 rounded-full flex items-center justify-center bg-emerald-500/20">
-                <i id="toast-icon" class="fas fa-check text-emerald-400 text-xs"></i>
-            </div>
-            <div>
-                <p id="toast-msg" class="text-sm font-bold tracking-tight">Operation Successful</p>
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">System Alert</p>
-            </div>
+    <!-- NOTIFICATION -->
+    <div id="toast" class="fixed bottom-10 right-10 transform translate-y-32 opacity-0 transition-all duration-500 z-50">
+        <div class="bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3">
+            <i id="toast-icon" class="fas fa-check-circle text-green-400"></i>
+            <span id="toast-msg" class="font-medium">Success!</span>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://ukjairmuockcrmmwhahz.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVramFpcm11b2NrY3JtbXdoYWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MjUxODQsImV4cCI6MjA5MTQwMTE4NH0.565ktRaG-uv3xROU1EmGxS3ONgbQOU3-mkSVcKDOYPk';
-        
-        // Using "Pass Key" logic with the previous email string as the secret
-        const AUTHORIZED_PASSKEY = "ramankamboj300@gmail.com"; 
+        const PASS_KEY = "ramankamboj300@gmail.com"; 
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- UI REFINEMENT ---
-        window.toggleThumbVisibility = function() {
-            const type = document.getElementById('form-type').value;
-            const thumbWrapper = document.getElementById('thumb-wrapper');
-            if (type === 'image') {
-                thumbWrapper.style.display = 'none';
-                document.getElementById('form-thumb-url').value = ""; 
-            } else {
-                thumbWrapper.style.display = 'block';
-            }
-        };
-
-        // --- AUTH FLOW ---
-        window.handleLogin = function() {
-            const key = document.getElementById('login-passkey').value;
-            if (key === AUTHORIZED_PASSKEY) {
-                localStorage.setItem('admin_session_active', 'true');
+        // --- AUTH ---
+        function handleLogin() {
+            const val = document.getElementById('login-passkey').value;
+            if (val === PASS_KEY) {
+                localStorage.setItem('is_logged_in', 'true');
                 showApp();
             } else {
                 document.getElementById('login-error').classList.remove('hidden');
-                showToast("Invalid Credentials", false);
             }
-        };
+        }
 
-        window.showApp = function() {
+        function showApp() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-content').classList.remove('hidden');
-            initApp();
-            toggleThumbVisibility();
-        };
+            switchTab('dashboard');
+            init();
+        }
 
-        window.logout = function() {
-            localStorage.removeItem('admin_session_active');
+        function logout() {
+            localStorage.removeItem('is_logged_in');
             window.location.reload();
-        };
+        }
 
         // --- NAVIGATION ---
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('#tab-container > div').forEach(div => div.classList.add('hidden'));
-            document.querySelectorAll('.sidebar-item').forEach(el => {
-                el.classList.remove('active', 'text-white', 'bg-blue-600');
-                el.classList.add('text-gray-500');
-                if (el.getAttribute('onclick').includes(`'${tabId}'`)) {
-                    el.classList.add('active', 'text-white', 'bg-blue-600');
-                    el.classList.remove('text-gray-500');
-                }
+        function switchTab(id) {
+            ['dashboard', 'categories', 'add-status', 'bulk-upload', 'manage'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`btn-${t}`);
+                if(el) el.classList.add('hidden');
+                if(btn) btn.classList.remove('active-tab');
             });
-            const activeTab = document.getElementById(`tab-${tabId}`);
-            if(activeTab) activeTab.classList.remove('hidden');
-            document.getElementById('page-title').innerText = tabId.replace('-', ' ');
-            
-            if (tabId === 'dashboard') { fetchStats(); fetchMostDownloaded(); }
-            if (tabId === 'categories') fetchCategories();
-            if (tabId === 'manage') fetchStatuses();
-            if (tabId === 'add-status') populateCategorySelect();
-        };
+            document.getElementById(`tab-${id}`).classList.remove('hidden');
+            document.getElementById(`btn-${id}`).classList.add('active-tab');
 
-        // --- DATA LAYER ---
-        async function initApp() {
-            await fetchStats();
-            await fetchMostDownloaded();
-            await populateCategorySelect();
+            if(id === 'dashboard') fetchStats();
+            if(id === 'categories') fetchCategories();
+            if(id === 'manage') fetchStatuses();
+            if(id === 'add-status' || id === 'bulk-upload') loadCategoryDropdowns();
+        }
+
+        // --- DATA ---
+        async function init() {
+            fetchStats();
+            loadCategoryDropdowns();
         }
 
         async function fetchStats() {
-            try {
-                const { count: sCount } = await supabaseClient.from('statuses').select('*', { count: 'exact', head: true });
-                const { count: cCount } = await supabaseClient.from('categories').select('*', { count: 'exact', head: true });
-                const { data } = await supabaseClient.from('statuses').select('like_count, download_count');
-                const totalLikes = data?.reduce((acc, curr) => acc + (curr.like_count || 0), 0) || 0;
-                const totalDownloads = data?.reduce((acc, curr) => acc + (curr.download_count || 0), 0) || 0;
-                document.getElementById('stat-total').innerText = sCount || 0;
-                document.getElementById('stat-categories').innerText = cCount || 0;
-                document.getElementById('stat-likes').innerText = totalLikes.toLocaleString();
-                document.getElementById('stat-downloads').innerText = totalDownloads.toLocaleString();
-            } catch (err) { console.error(err); }
-        }
+            const { count: sCount } = await client.from('statuses').select('*', { count: 'exact', head: true });
+            const { count: cCount } = await client.from('categories').select('*', { count: 'exact', head: true });
+            const { data } = await client.from('statuses').select('title, type, thumbnail_url, file_url, like_count, download_count');
+            
+            // Total Stats
+            document.getElementById('stat-total').innerText = sCount || 0;
+            document.getElementById('stat-categories').innerText = cCount || 0;
+            document.getElementById('stat-likes').innerText = data?.reduce((a, b) => a + (b.like_count || 0), 0) || 0;
+            document.getElementById('stat-downloads').innerText = data?.reduce((a, b) => a + (b.download_count || 0), 0) || 0;
 
-        async function fetchMostDownloaded() {
-            const tbody = document.getElementById('most-downloaded-table-body');
-            tbody.innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-gray-300 font-medium">Syncing telemetry...</td></tr>';
-            const { data, error } = await supabaseClient.from('statuses').select('*').order('download_count', { ascending: false }).limit(5);
-            if (error) return;
-            tbody.innerHTML = data.map((item, index) => `
-                <tr class="hover:bg-gray-50/80 transition-colors group">
-                    <td class="px-8 py-5">
-                        <div class="flex items-center gap-4">
-                            <span class="text-[10px] font-black text-gray-200 w-4 tracking-tighter">0${index + 1}</span>
-                            <div class="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden border border-gray-100 shadow-sm">
-                                <img src="${item.thumbnail_url || item.file_url}" onerror="this.src='https://via.placeholder.com/150'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+            // Most Downloaded List (Top 10)
+            const topList = [...(data || [])].sort((a, b) => (b.download_count || 0) - (a.download_count || 0)).slice(0, 10);
+            const listBody = document.getElementById('top-downloaded-body');
+            
+            if(topList.length === 0) {
+                listBody.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">No data found yet.</td></tr>';
+            } else {
+                listBody.innerHTML = topList.map(s => `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <img src="${s.thumbnail_url || s.file_url}" class="w-10 h-10 rounded-lg object-cover bg-gray-100" onerror="this.src='https://via.placeholder.com/50'">
+                                <span class="font-bold text-sm truncate max-w-[150px]">${s.title}</span>
                             </div>
-                            <span class="font-bold text-gray-800 truncate max-w-[180px]">${item.title}</span>
-                        </div>
-                    </td>
-                    <td class="px-8 py-5 text-center font-black text-blue-600 tracking-tight">${item.download_count || 0}</td>
-                    <td class="px-8 py-5 text-center text-gray-500 font-semibold">${item.like_count || 0}</td>
-                    <td class="px-8 py-5">
-                        <span class="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${item.type === 'video' ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600'}">${item.type}</span>
-                    </td>
-                    <td class="px-8 py-5 text-right"><button onclick="switchTab('manage')" class="text-gray-300 group-hover:text-blue-600 transition-colors"><i class="fas fa-arrow-right-long"></i></button></td>
-                </tr>
-            `).join('');
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-[10px] px-2 py-1 bg-gray-100 rounded-md font-bold uppercase text-gray-500">${s.type}</span>
+                        </td>
+                        <td class="px-6 py-4 font-medium text-sm">
+                            <i class="fas fa-heart text-red-400 mr-1"></i> ${s.like_count || 0}
+                        </td>
+                        <td class="px-6 py-4 font-bold text-sm text-blue-600">
+                            <i class="fas fa-download mr-1"></i> ${s.download_count || 0}
+                        </td>
+                    </tr>
+                `).join('');
+            }
         }
 
-        // --- CATEGORY OPS ---
         async function fetchCategories() {
+            const { data } = await client.from('categories').select('*').order('name');
             const tbody = document.getElementById('categories-table-body');
-            tbody.innerHTML = '<tr><td colspan="4" class="px-8 py-6 text-center italic text-gray-400">Updating registry...</td></tr>';
-            const { data, error } = await supabaseClient.from('categories').select('*').order('name');
-            if (error) return;
-            tbody.innerHTML = data.map(cat => `
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-8 py-4 text-gray-300 font-mono text-[10px]">#${cat.id}</td>
-                    <td class="px-8 py-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-9 h-9 rounded-xl bg-gray-50 text-gray-400 flex items-center justify-center border border-gray-100">
-                                ${cat.icon_url ? `<img src="${cat.icon_url}" class="w-full h-full rounded-xl object-cover">` : `<i class="fas fa-link text-xs"></i>`}
-                            </div>
-                            <span class="font-bold text-gray-800">${cat.name}</span>
+            tbody.innerHTML = data.map(c => `
+                <tr>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <img src="${c.icon_url}" class="w-8 h-8 rounded-lg bg-gray-100 object-cover" onerror="this.src='https://via.placeholder.com/50'">
+                            <span class="font-bold">${c.name}</span>
                         </div>
                     </td>
-                    <td class="px-8 py-4"><span class="flex items-center gap-1.5 text-[9px] font-black text-emerald-500 uppercase tracking-widest"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Active</span></td>
-                    <td class="px-8 py-4 text-right">
-                        <button onclick="deleteCategory(${cat.id})" class="w-8 h-8 rounded-lg text-red-400 hover:bg-red-50 transition-all"><i class="fas fa-trash-can text-xs"></i></button>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="deleteCat(${c.id})" class="text-red-500 hover:bg-red-50 p-2 rounded-lg"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
             `).join('');
         }
 
+        async function loadCategoryDropdowns() {
+            const { data } = await client.from('categories').select('id, name').order('name');
+            const options = '<option value="">Choose Category</option>' + 
+                data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            
+            const addSelect = document.getElementById('form-category-select');
+            const bulkSelect = document.getElementById('bulk-category-select');
+            
+            if(addSelect) addSelect.innerHTML = options;
+            if(bulkSelect) bulkSelect.innerHTML = options;
+        }
+
+        // --- ADDING ---
         document.getElementById('category-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const payload = {
-                name: document.getElementById('cat-name').value,
-                icon_url: document.getElementById('cat-icon').value,
-                description: document.getElementById('cat-desc').value,
-                is_active: true
-            };
-            const { error } = await supabaseClient.from('categories').insert([payload]);
-            if (error) showToast(error.message, false);
-            else { 
-                showToast("Category Registered"); 
-                document.getElementById('category-form').reset(); 
-                fetchCategories(); 
-                fetchStats(); 
-            }
+            const name = document.getElementById('cat-name').value;
+            const icon = document.getElementById('cat-icon').value;
+            await client.from('categories').insert([{ name, icon_url: icon, is_active: true }]);
+            msg("Category Added");
+            document.getElementById('category-form').reset();
+            fetchCategories();
         });
 
-        window.deleteCategory = async function(id) {
-            if (!confirm('Warning: Deleting a node might orphan associated assets. Proceed?')) return;
-            await supabaseClient.from('categories').delete().eq('id', id);
-            fetchCategories(); fetchStats();
-        };
-
-        async function populateCategorySelect() {
-            const { data } = await supabaseClient.from('categories').select('id, name').eq('is_active', true);
-            const select = document.getElementById('form-category-select');
-            if (data) select.innerHTML = '<option value="">Select Node</option>' + data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        function toggleThumb() {
+            const type = document.getElementById('form-type').value;
+            document.getElementById('thumb-input-area').style.display = type === 'video' ? 'block' : 'none';
         }
 
-        // --- ASSET DEPLOYMENT ---
         document.getElementById('status-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
+            btn.innerText = "Please wait...";
             btn.disabled = true;
-            btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Processing...`;
 
             const type = document.getElementById('form-type').value;
-            const fileUrl = document.getElementById('form-file-url').value;
-            let thumbUrl = document.getElementById('form-thumb-url').value;
+            const file = document.getElementById('form-file-url').value;
+            let thumb = document.getElementById('form-thumb-url').value;
 
-            // Inheritance logic: If Image, Poster = Source
-            if (type === 'image') {
-                thumbUrl = fileUrl;
-            }
+            if(type === 'image' || !thumb) thumb = file; 
 
-            const payload = {
+            const { error } = await client.from('statuses').insert([{
                 title: document.getElementById('form-title').value,
-                category_id: parseInt(document.getElementById('form-category-select').value),
-                type: type,
-                file_url: fileUrl,
-                thumbnail_url: thumbUrl,
-                duration: parseInt(document.getElementById('form-duration').value) || 0,
-                file_size: parseInt(document.getElementById('form-size').value) || 0,
-                download_count: 0,
+                category_id: document.getElementById('form-category-select').value,
+                type,
+                file_url: file,
+                thumbnail_url: thumb,
+                is_active: true,
                 like_count: 0,
-                is_active: true
-            };
+                download_count: 0
+            }]);
 
-            const { error } = await supabaseClient.from('statuses').insert([payload]);
-            if (error) {
-                showToast(error.message, false);
-            } else {
-                showToast("Asset Deployed Successfully");
+            if(!error) {
+                msg("Status Uploaded!");
                 document.getElementById('status-form').reset();
-                toggleThumbVisibility();
-                switchTab('dashboard');
-                initApp();
+                toggleThumb();
+                switchTab('manage');
+            } else {
+                msg("Error: " + error.message, false);
             }
+            btn.innerText = "Upload Status";
             btn.disabled = false;
-            btn.innerHTML = `<i class="fas fa-rocket"></i> Finalize Deployment`;
         });
 
-        // --- INVENTORY VIEW ---
-        window.fetchStatuses = async function() {
+        // --- BULK UPLOAD LOGIC ---
+        async function startBulkUpload() {
+            const categoryId = document.getElementById('bulk-category-select').value;
+            const type = document.getElementById('bulk-type').value;
+            const linksRaw = document.getElementById('bulk-links').value.trim();
+            const btn = document.getElementById('bulk-btn');
+            
+            if(!categoryId) return msg("Select Category first", false);
+            if(!linksRaw) return msg("Paste some links", false);
+            
+            const links = linksRaw.split('\n').map(l => l.trim()).filter(l => l !== "");
+            const total = links.length;
+            
+            btn.disabled = true;
+            document.getElementById('bulk-progress').classList.remove('hidden');
+            
+            let success = 0;
+            for(let i=0; i < total; i++) {
+                const link = links[i];
+                const title = "Status " + (new Date().getTime().toString().slice(-4));
+                
+                const { error } = await client.from('statuses').insert([{
+                    title: title,
+                    category_id: categoryId,
+                    type: type,
+                    file_url: link,
+                    thumbnail_url: link, 
+                    is_active: true,
+                    like_count: 0,
+                    download_count: 0
+                }]);
+                
+                if(!error) success++;
+                
+                const percent = Math.round(((i + 1) / total) * 100);
+                document.getElementById('bulk-bar').style.width = percent + "%";
+                document.getElementById('bulk-count').innerText = `${i+1}/${total}`;
+            }
+            
+            msg(`Uploaded ${success} of ${total} links!`);
+            document.getElementById('bulk-links').value = "";
+            btn.disabled = false;
+            setTimeout(() => {
+                document.getElementById('bulk-progress').classList.add('hidden');
+                document.getElementById('bulk-bar').style.width = "0%";
+            }, 3000);
+        }
+
+        // --- MANAGE ---
+        async function fetchStatuses() {
             const grid = document.getElementById('manage-grid');
-            grid.innerHTML = '<div class="col-span-full py-40 flex flex-col items-center gap-4 text-gray-300"><div class="loader w-12 h-12 border-4 border-blue-50 rounded-full"></div><p class="text-xs font-bold uppercase tracking-[0.2em]">Polling Server...</p></div>';
-            const { data, error } = await supabaseClient.from('statuses').select('*').order('created_at', { ascending: false });
-            if (error) return;
-            grid.innerHTML = data.map(item => `
-                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
-                    <div class="relative aspect-[4/5] bg-gray-50 overflow-hidden">
-                        <img src="${item.thumbnail_url || item.file_url}" onerror="this.src='https://via.placeholder.com/300'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-2.5 py-1 rounded-lg text-[9px] font-black text-gray-900 uppercase tracking-widest shadow-sm border border-gray-100">${item.type}</div>
+            grid.innerHTML = '<div class="col-span-full py-20 text-center"><div class="loader w-10 h-10 border-4 border-gray-200 rounded-full mx-auto mb-4"></div> Loading...</div>';
+            
+            const { data } = await client.from('statuses').select('*').order('created_at', { ascending: false });
+            grid.innerHTML = data.map(s => `
+                <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm group">
+                    <div class="relative aspect-[9/12] bg-gray-50">
+                        <img src="${s.thumbnail_url || s.file_url}" class="w-full h-full object-cover">
+                        <div class="absolute top-3 left-3 bg-black/50 backdrop-blur text-white text-[10px] px-2 py-1 rounded-md uppercase font-bold">${s.type}</div>
                     </div>
-                    <div class="p-6">
-                        <h4 class="font-bold text-gray-900 truncate text-sm mb-3">${item.title}</h4>
-                        <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
-                            <span class="flex items-center gap-1.5"><i class="fas fa-cloud-arrow-down text-blue-500"></i> ${item.download_count || 0}</span>
-                            <span class="flex items-center gap-1.5"><i class="fas fa-calendar-day"></i> ${new Date(item.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <div class="mt-6 flex gap-3">
-                            <button onclick="deleteStatus(${item.id})" class="flex-1 py-2.5 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-colors">Purge</button>
-                            <button class="px-4 py-2.5 bg-gray-50 text-gray-400 rounded-xl text-[10px] hover:bg-gray-100 transition-colors"><i class="fas fa-sliders"></i></button>
+                    <div class="p-4">
+                        <h4 class="font-bold truncate text-sm mb-4">${s.title}</h4>
+                        <div class="flex gap-2">
+                            <button onclick="deleteStatus(${s.id})" class="flex-1 bg-red-50 text-red-500 py-2 rounded-xl text-xs font-bold hover:bg-red-100">Delete</button>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        window.deleteStatus = async function(id) {
-            if (!confirm('Permanent deletion requested. Execute purge?')) return;
-            await supabaseClient.from('statuses').delete().eq('id', id);
-            fetchStatuses(); fetchStats(); fetchMostDownloaded();
-        };
+        async function deleteStatus(id) {
+            if(!confirm("Are you sure?")) return;
+            await client.from('statuses').delete().eq('id', id);
+            fetchStatuses();
+            fetchStats();
+        }
 
-        window.showToast = function(msg, isSuccess = true) {
+        async function deleteCat(id) {
+            if(!confirm("This will delete the category!")) return;
+            await client.from('categories').delete().eq('id', id);
+            fetchCategories();
+        }
+
+        function msg(text, success = true) {
             const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = msg;
-            document.getElementById('toast-icon').className = isSuccess ? "fas fa-check text-emerald-400 text-xs" : "fas fa-xmark text-rose-400 text-xs";
-            document.getElementById('toast-icon-bg').className = isSuccess ? "w-8 h-8 rounded-full flex items-center justify-center bg-emerald-500/10" : "w-8 h-8 rounded-full flex items-center justify-center bg-rose-500/10";
-            
+            document.getElementById('toast-msg').innerText = text;
+            document.getElementById('toast-icon').className = success ? "fas fa-check-circle text-green-400" : "fas fa-times-circle text-red-400";
             toast.classList.remove('translate-y-32', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-32', 'opacity-0'), 4000);
-        };
+            setTimeout(() => toast.classList.add('translate-y-32', 'opacity-0'), 3000);
+        }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('admin_session_active') === 'true') showApp();
-        });
+        window.onload = () => {
+            if(localStorage.getItem('is_logged_in') === 'true') showApp();
+        };
     </script>
 </body>
 </html>
