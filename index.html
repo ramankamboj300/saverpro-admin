@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Status Admin Panel</title>
+    <title>Pro Status Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .sidebar-item:hover { background: #eff6ff; color: #2563eb; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; }
+        .sidebar-item:hover { background: #f1f5f9; color: #2563eb; }
         .sidebar-item.active { background: #2563eb; color: white; }
         .loader { border-top-color: #3498db; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -20,134 +20,146 @@
 </head>
 <body class="bg-gray-50">
 
-    <!-- LOGIN SCREEN -->
+    <!-- AUTHENTICATION OVERLAY -->
     <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 p-4">
-        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 transform transition-all">
-            <div class="text-center mb-8">
-                <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
-                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 border border-slate-700/10">
+            <div class="text-center mb-10">
+                <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-blue-500/20">
+                    <i class="fas fa-lock text-white text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800">Admin Login</h2>
-                <p class="text-gray-500 mt-2">Dashboard access ke liye email dale</p>
+                <h2 class="text-2xl font-bold text-gray-900">Administrative Access</h2>
+                <p class="text-gray-500 mt-2 text-sm">Please enter your authorized pass key</p>
             </div>
             
-            <div class="space-y-4">
+            <div class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Enter Key</label>
-                    <input type="email" id="login-email" placeholder="passkey" 
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Pass Key</label>
+                    <input type="password" id="login-passkey" placeholder="••••••••••••" 
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-gray-300">
                 </div>
-                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all transform active:scale-95 shadow-lg shadow-blue-100">
-                    Access Dashboard
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all transform active:scale-[0.98] shadow-lg shadow-blue-500/25">
+                    Authenticate
                 </button>
-                <p id="login-error" class="text-red-500 text-sm text-center hidden">Galti: Sirf authorized email allowed hai</p>
+                <p id="login-error" class="text-red-500 text-xs text-center hidden font-medium">Authentication failed. Invalid pass key.</p>
             </div>
         </div>
     </div>
 
-    <!-- MAIN APP WRAPPER -->
+    <!-- MAIN DASHBOARD LAYOUT -->
     <div id="app-content" class="hidden min-h-screen flex">
         
-        <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
-            <div class="p-6">
+        <!-- Navigation Sidebar -->
+        <aside class="w-72 bg-white border-r border-gray-200 hidden lg:flex flex-col">
+            <div class="p-8">
                 <div class="flex items-center gap-3">
-                    <div class="bg-blue-600 p-2 rounded-lg text-white">
-                        <i class="fas fa-layer-group"></i>
+                    <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-2.5 rounded-xl text-white shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-cube"></i>
                     </div>
-                    <span class="font-bold text-xl text-gray-800 tracking-tight">StatusPro</span>
+                    <span class="font-extrabold text-xl text-gray-900 tracking-tight">SystemCore</span>
                 </div>
             </div>
             
-            <nav class="flex-1 px-4 space-y-1 mt-4">
-                <a href="#" onclick="switchTab('dashboard')" class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all">
-                    <i class="fas fa-chart-pie w-5 text-center"></i> Dashboard
-                </a>
-                <a href="#" onclick="switchTab('categories')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-gray-600">
-                    <i class="fas fa-tags w-5 text-center"></i> Categories
-                </a>
-                <div class="pt-4 pb-2 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Content Management</div>
-                <a href="#" onclick="switchTab('add-status')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-gray-600">
-                    <i class="fas fa-plus-circle w-5 text-center"></i> Add New Status
-                </a>
-                <a href="#" onclick="switchTab('manage')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-gray-600">
-                    <i class="fas fa-list w-5 text-center"></i> Manage All
-                </a>
+            <nav class="flex-1 px-6 space-y-2 mt-4">
+                <button onclick="switchTab('dashboard')" class="sidebar-item active w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all text-sm">
+                    <i class="fas fa-grid-2 w-5 opacity-70 text-center"></i> Analytics Overview
+                </button>
+                <button onclick="switchTab('categories')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all text-sm text-gray-500">
+                    <i class="fas fa-folder-tree w-5 opacity-70 text-center"></i> Category Engine
+                </button>
+                
+                <div class="pt-8 pb-3 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Management</div>
+                
+                <button onclick="switchTab('add-status')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all text-sm text-gray-500">
+                    <i class="fas fa-plus-square w-5 opacity-70 text-center"></i> Deploy Content
+                </button>
+                <button onclick="switchTab('manage')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all text-sm text-gray-500">
+                    <i class="fas fa-list-check w-5 opacity-70 text-center"></i> Inventory Control
+                </button>
             </nav>
 
-            <div class="p-4 border-t border-gray-100">
-                <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-all">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+            <div class="p-6 border-t border-gray-100">
+                <button onclick="logout()" class="w-full flex items-center justify-between px-4 py-3 text-red-500 font-bold rounded-xl hover:bg-red-50 transition-all text-xs uppercase tracking-wider">
+                    Terminals Session <i class="fas fa-power-off"></i>
                 </button>
             </div>
         </aside>
 
-        <!-- Main Content -->
+        <!-- Main Content Viewport -->
         <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <!-- Header -->
-            <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8">
-                <h1 id="page-title" class="text-xl font-semibold text-gray-800 uppercase tracking-wide">Dashboard</h1>
-                <div class="flex items-center gap-4">
-                    <div class="text-right hidden sm:block">
-                        <p class="text-sm font-medium text-gray-900">Raman Kamboj</p>
-                        <p class="text-xs text-gray-500">Super Admin</p>
+            <!-- Global Header -->
+            <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 h-20 flex items-center justify-between px-10 sticky top-0 z-10">
+                <div>
+                    <h1 id="page-title" class="text-lg font-bold text-gray-900 capitalize tracking-tight">Overview</h1>
+                    <p class="text-xs text-gray-400 font-medium">Server Health: Optimal</p>
+                </div>
+                <div class="flex items-center gap-5">
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-gray-900">Administrator</p>
+                        <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">Verified Session</p>
                     </div>
-                    <img src="https://ui-avatars.com/api/?name=Raman+Kamboj&background=2563eb&color=fff" class="w-10 h-10 rounded-full border border-gray-100 shadow-sm">
+                    <div class="relative">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=2563eb&color=fff&bold=true" class="w-11 h-11 rounded-2xl border-2 border-white shadow-md">
+                        <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
+                    </div>
                 </div>
             </header>
 
-            <!-- Content Area -->
-            <div class="flex-1 overflow-y-auto p-8 no-scrollbar" id="tab-container">
+            <!-- Scrollable Viewport -->
+            <div class="flex-1 overflow-y-auto p-10 no-scrollbar" id="tab-container">
                 
-                <!-- Tab: Dashboard -->
-                <div id="tab-dashboard" class="space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="bg-blue-50 text-blue-600 p-3 rounded-xl"><i class="fas fa-images"></i></div>
+                <!-- ANALYTICS TAB -->
+                <div id="tab-dashboard" class="space-y-10">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="bg-blue-50 text-blue-600 p-3.5 rounded-2xl"><i class="fas fa-photo-film"></i></div>
+                                <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded">LIVE</span>
                             </div>
-                            <h3 class="text-gray-500 text-sm font-medium">Total Statuses</h3>
-                            <p class="text-2xl font-bold text-gray-900 mt-1" id="stat-total">0</p>
+                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Total Assets</h3>
+                            <p class="text-3xl font-black text-gray-900 mt-2" id="stat-total">0</p>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl"><i class="fas fa-tags"></i></div>
+                        <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="bg-indigo-50 text-indigo-600 p-3.5 rounded-2xl"><i class="fas fa-sitemap"></i></div>
                             </div>
-                            <h3 class="text-gray-500 text-sm font-medium">Categories</h3>
-                            <p class="text-2xl font-bold text-gray-900 mt-1" id="stat-categories">0</p>
+                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Active Nodes</h3>
+                            <p class="text-3xl font-black text-gray-900 mt-2" id="stat-categories">0</p>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="bg-purple-50 text-purple-600 p-3 rounded-xl"><i class="fas fa-heart"></i></div>
+                        <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="bg-rose-50 text-rose-600 p-3.5 rounded-2xl"><i class="fas fa-bolt"></i></div>
                             </div>
-                            <h3 class="text-gray-500 text-sm font-medium">Total Likes</h3>
-                            <p class="text-2xl font-bold text-gray-900 mt-1" id="stat-likes">0</p>
+                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">User Reactions</h3>
+                            <p class="text-3xl font-black text-gray-900 mt-2" id="stat-likes">0</p>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="bg-orange-50 text-orange-600 p-3 rounded-xl"><i class="fas fa-download"></i></div>
+                        <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="bg-emerald-50 text-emerald-600 p-3.5 rounded-2xl"><i class="fas fa-download"></i></div>
                             </div>
-                            <h3 class="text-gray-500 text-sm font-medium">Downloads</h3>
-                            <p class="text-2xl font-bold text-gray-900 mt-1" id="stat-downloads">0</p>
+                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Distributions</h3>
+                            <p class="text-3xl font-black text-gray-900 mt-2" id="stat-downloads">0</p>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="p-6 border-b border-gray-50 flex items-center justify-between">
-                            <h2 class="font-bold text-gray-800 uppercase tracking-tighter text-sm flex items-center gap-2">
-                                <i class="fas fa-fire text-orange-500"></i> Most Downloaded (Popular)
-                            </h2>
-                            <button onclick="switchTab('manage')" class="text-blue-600 text-sm font-semibold hover:underline">Sabhi Dekhein</button>
+                    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+                            <div>
+                                <h2 class="font-black text-gray-900 uppercase tracking-tighter text-sm flex items-center gap-2">
+                                    <span class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span> Trending Performance
+                                </h2>
+                                <p class="text-[10px] text-gray-400 font-bold mt-1">TOP 5 PERFORMING ASSETS</p>
+                            </div>
+                            <button onclick="switchTab('manage')" class="text-blue-600 text-xs font-bold hover:bg-blue-50 px-4 py-2 rounded-lg transition-all">VIEW INVENTORY</button>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                                <thead class="bg-gray-50/50 text-gray-400 text-[10px] font-black uppercase tracking-widest">
                                     <tr>
-                                        <th class="px-6 py-4">Title</th>
-                                        <th class="px-6 py-4 text-center">Downloads</th>
-                                        <th class="px-6 py-4 text-center">Likes</th>
-                                        <th class="px-6 py-4">Type</th>
-                                        <th class="px-6 py-4 text-right">Action</th>
+                                        <th class="px-8 py-5">Asset Identification</th>
+                                        <th class="px-8 py-5 text-center">Reach</th>
+                                        <th class="px-8 py-5 text-center">Sentiment</th>
+                                        <th class="px-8 py-5">Class</th>
+                                        <th class="px-8 py-5 text-right">Metrics</th>
                                     </tr>
                                 </thead>
                                 <tbody id="most-downloaded-table-body" class="divide-y divide-gray-50 text-sm">
@@ -157,44 +169,44 @@
                     </div>
                 </div>
 
-                <!-- Tab: Categories -->
-                <div id="tab-categories" class="hidden space-y-6">
-                    <div class="flex flex-col lg:flex-row gap-6">
-                        <div class="lg:w-1/3">
-                            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sticky top-0">
-                                <h2 class="text-lg font-bold text-gray-800 mb-4">Nayi Category Jodein</h2>
-                                <form id="category-form" class="space-y-4">
+                <!-- CATEGORY ENGINE TAB -->
+                <div id="tab-categories" class="hidden space-y-8">
+                    <div class="flex flex-col xl:flex-row gap-8">
+                        <div class="xl:w-80 shrink-0">
+                            <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                                <h2 class="text-lg font-black text-gray-900 mb-6 tracking-tight">New Node</h2>
+                                <form id="category-form" class="space-y-5">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Naam</label>
-                                        <input type="text" id="cat-name" required placeholder="e.g. Love, Sad, Attitude" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Display Name</label>
+                                        <input type="text" id="cat-name" required placeholder="Nature" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Icon URL</label>
-                                        <input type="text" id="cat-icon" placeholder="https://..." class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Icon Endpoint</label>
+                                        <input type="text" id="cat-icon" placeholder="https://cdn..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                        <textarea id="cat-desc" rows="3" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Metadata Description</label>
+                                        <textarea id="cat-desc" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"></textarea>
                                     </div>
-                                    <button type="submit" id="cat-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-lg transition-all">
-                                        Category Save Karein
+                                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all text-sm uppercase tracking-wider">
+                                        Register Category
                                     </button>
                                 </form>
                             </div>
                         </div>
-                        <div class="lg:w-2/3">
-                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                                <div class="p-4 border-b border-gray-50 bg-gray-50/50">
-                                    <h2 class="font-bold text-gray-800 text-sm">Puraney Categories</h2>
+                        <div class="flex-1">
+                            <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                                <div class="p-6 border-b border-gray-50 bg-gray-50/50">
+                                    <h2 class="font-bold text-gray-900 text-xs uppercase tracking-widest">Active Architecture</h2>
                                 </div>
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-left">
-                                        <thead class="text-xs text-gray-500 uppercase">
+                                        <thead class="text-[10px] text-gray-400 font-black uppercase tracking-widest">
                                             <tr>
-                                                <th class="px-6 py-3">ID</th>
-                                                <th class="px-6 py-3">Category</th>
-                                                <th class="px-6 py-3">Status</th>
-                                                <th class="px-6 py-3 text-right">Mitaein</th>
+                                                <th class="px-8 py-4">UID</th>
+                                                <th class="px-8 py-4">Node Name</th>
+                                                <th class="px-8 py-4">Status</th>
+                                                <th class="px-8 py-4 text-right">Ops</th>
                                             </tr>
                                         </thead>
                                         <tbody id="categories-table-body" class="divide-y divide-gray-50 text-sm">
@@ -206,70 +218,82 @@
                     </div>
                 </div>
 
-                <!-- Tab: Add Status -->
-                <div id="tab-add-status" class="hidden max-w-2xl mx-auto space-y-6">
-                    <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-800 mb-6">Naya Status Upload Karein</h2>
-                        <form id="status-form" class="space-y-5">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                                    <input type="text" id="form-title" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                <!-- CONTENT DEPLOYMENT TAB -->
+                <div id="tab-add-status" class="hidden max-w-3xl mx-auto">
+                    <div class="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                        <div class="mb-10">
+                            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Deploy New Asset</h2>
+                            <p class="text-gray-400 text-sm mt-1">Configure asset parameters for production environment.</p>
+                        </div>
+                        
+                        <form id="status-form" class="space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Asset Title</label>
+                                    <input type="text" id="form-title" required class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
                                 </div>
+                                
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                    <select id="form-category-select" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                                        <option value="">Choose Category</option>
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category Assignment</label>
+                                    <select id="form-category-select" required class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold appearance-none">
+                                        <option value="">Select Node</option>
                                     </select>
                                 </div>
+                                
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Content Type</label>
-                                    <select id="form-type" onchange="toggleThumbVisibility()" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                                        <option value="image">Image (Photo)</option>
-                                        <option value="video">Video (MP4)</option>
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Media Class</label>
+                                    <select id="form-type" onchange="toggleThumbVisibility()" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                        <option value="image">Still Image (JPG/PNG)</option>
+                                        <option value="video">Motion Video (MP4)</option>
                                     </select>
                                 </div>
-                                <div class="col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">File URL</label>
-                                    <input type="text" id="form-file-url" placeholder="https://supabase-url.com/file.jpg" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Source URL (Primary File)</label>
+                                    <input type="text" id="form-file-url" placeholder="https://storage.provider.com/asset.mp4" required class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold font-mono">
                                 </div>
-                                <!-- Thumbnail Section: Hidden for Images -->
-                                <div class="col-span-2" id="thumb-wrapper">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL (Required for Video)</label>
-                                    <input type="text" id="form-thumb-url" placeholder="https://..." class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+
+                                <!-- Dynamic Thumbnail Group -->
+                                <div class="md:col-span-2" id="thumb-wrapper">
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Poster Endpoint (Required for Video)</label>
+                                    <input type="text" id="form-thumb-url" placeholder="https://..." class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold font-mono">
+                                    <p class="text-[10px] text-gray-400 mt-2 italic">* For images, Source URL is automatically inherited as the poster.</p>
                                 </div>
+
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration (Seconds)</label>
-                                    <input type="number" id="form-duration" value="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Runtime (Seconds)</label>
+                                    <input type="number" id="form-duration" value="0" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
                                 </div>
+                                
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">File Size (KB)</label>
-                                    <input type="number" id="form-size" value="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Storage Footprint (KB)</label>
+                                    <input type="number" id="form-size" value="0" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
                                 </div>
                             </div>
                             
-                            <div class="pt-4">
-                                <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                                    <i class="fas fa-cloud-upload-alt"></i> Publish Now
+                            <div class="pt-6">
+                                <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-500/30 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em]">
+                                    <i class="fas fa-rocket"></i> Finalize Deployment
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <!-- Tab: Manage -->
+                <!-- INVENTORY CONTROL TAB -->
                 <div id="tab-manage" class="hidden">
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
-                        <div class="p-6 flex items-center justify-between border-b border-gray-50">
-                            <div class="relative w-72">
-                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" placeholder="Search statuses..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none">
+                    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm">
+                        <div class="p-8 flex items-center justify-between border-b border-gray-50">
+                            <div class="relative w-96">
+                                <i class="fas fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                <input type="text" placeholder="Search Inventory Registry..." class="w-full pl-12 pr-6 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                             </div>
-                            <button onclick="fetchStatuses()" class="p-2 text-gray-500 hover:text-blue-600 transition-all">
-                                <i class="fas fa-sync-alt"></i>
+                            <button onclick="fetchStatuses()" class="p-3 text-gray-400 hover:text-blue-600 bg-gray-50 rounded-xl transition-all">
+                                <i class="fas fa-rotate"></i>
                             </button>
                         </div>
-                        <div id="manage-grid" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div id="manage-grid" class="p-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                            <!-- Cards inject here -->
                         </div>
                     </div>
                 </div>
@@ -278,42 +302,49 @@
         </main>
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-8 right-8 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-[100]">
-        <div class="bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
-            <i id="toast-icon" class="fas fa-check-circle text-green-400"></i>
-            <span id="toast-msg">Success Message</span>
+    <!-- NOTIFICATION SYSTEM -->
+    <div id="toast" class="fixed bottom-10 right-10 transform translate-y-32 opacity-0 transition-all duration-500 pointer-events-none z-[100]">
+        <div class="bg-gray-900/95 backdrop-blur-lg text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
+            <div id="toast-icon-bg" class="w-8 h-8 rounded-full flex items-center justify-center bg-emerald-500/20">
+                <i id="toast-icon" class="fas fa-check text-emerald-400 text-xs"></i>
+            </div>
+            <div>
+                <p id="toast-msg" class="text-sm font-bold tracking-tight">Operation Successful</p>
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">System Alert</p>
+            </div>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://ukjairmuockcrmmwhahz.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVramFpcm11b2NrY3JtbXdoYWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MjUxODQsImV4cCI6MjA5MTQwMTE4NH0.565ktRaG-uv3xROU1EmGxS3ONgbQOU3-mkSVcKDOYPk';
-        const ALLOWED_EMAIL = "ramankamboj300@gmail.com";
+        
+        // Using "Pass Key" logic with the previous email string as the secret
+        const AUTHORIZED_PASSKEY = "ramankamboj300@gmail.com"; 
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- UI TOGGLES ---
+        // --- UI REFINEMENT ---
         window.toggleThumbVisibility = function() {
             const type = document.getElementById('form-type').value;
             const thumbWrapper = document.getElementById('thumb-wrapper');
-            // Agar image hai toh thumb input chupa do
             if (type === 'image') {
-                thumbWrapper.classList.add('hidden');
-                document.getElementById('form-thumb-url').value = ""; // Clear existing
+                thumbWrapper.style.display = 'none';
+                document.getElementById('form-thumb-url').value = ""; 
             } else {
-                thumbWrapper.classList.remove('hidden');
+                thumbWrapper.style.display = 'block';
             }
         };
 
-        // --- AUTH ---
+        // --- AUTH FLOW ---
         window.handleLogin = function() {
-            const email = document.getElementById('login-email').value;
-            if (email.trim().toLowerCase() === ALLOWED_EMAIL.toLowerCase()) {
-                localStorage.setItem('admin_logged_in', 'true');
+            const key = document.getElementById('login-passkey').value;
+            if (key === AUTHORIZED_PASSKEY) {
+                localStorage.setItem('admin_session_active', 'true');
                 showApp();
             } else {
-                showToast("Access Denied!", false);
+                document.getElementById('login-error').classList.remove('hidden');
+                showToast("Invalid Credentials", false);
             }
         };
 
@@ -321,11 +352,11 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-content').classList.remove('hidden');
             initApp();
-            toggleThumbVisibility(); // Default initial state
+            toggleThumbVisibility();
         };
 
         window.logout = function() {
-            localStorage.removeItem('admin_logged_in');
+            localStorage.removeItem('admin_session_active');
             window.location.reload();
         };
 
@@ -334,10 +365,10 @@
             document.querySelectorAll('#tab-container > div').forEach(div => div.classList.add('hidden'));
             document.querySelectorAll('.sidebar-item').forEach(el => {
                 el.classList.remove('active', 'text-white', 'bg-blue-600');
-                el.classList.add('text-gray-600');
+                el.classList.add('text-gray-500');
                 if (el.getAttribute('onclick').includes(`'${tabId}'`)) {
                     el.classList.add('active', 'text-white', 'bg-blue-600');
-                    el.classList.remove('text-gray-600');
+                    el.classList.remove('text-gray-500');
                 }
             });
             const activeTab = document.getElementById(`tab-${tabId}`);
@@ -350,7 +381,7 @@
             if (tabId === 'add-status') populateCategorySelect();
         };
 
-        // --- DATA FETCHING ---
+        // --- DATA LAYER ---
         async function initApp() {
             await fetchStats();
             await fetchMostDownloaded();
@@ -373,49 +404,51 @@
 
         async function fetchMostDownloaded() {
             const tbody = document.getElementById('most-downloaded-table-body');
-            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-400 italic">Trends load ho rahe hain...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-gray-300 font-medium">Syncing telemetry...</td></tr>';
             const { data, error } = await supabaseClient.from('statuses').select('*').order('download_count', { ascending: false }).limit(5);
             if (error) return;
             tbody.innerHTML = data.map((item, index) => `
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-bold text-gray-300 w-4">#${index + 1}</span>
-                            <div class="w-8 h-8 rounded bg-gray-200 overflow-hidden">
-                                <img src="${item.thumbnail_url || item.file_url}" onerror="this.src='https://via.placeholder.com/150'" class="w-full h-full object-cover">
+                <tr class="hover:bg-gray-50/80 transition-colors group">
+                    <td class="px-8 py-5">
+                        <div class="flex items-center gap-4">
+                            <span class="text-[10px] font-black text-gray-200 w-4 tracking-tighter">0${index + 1}</span>
+                            <div class="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden border border-gray-100 shadow-sm">
+                                <img src="${item.thumbnail_url || item.file_url}" onerror="this.src='https://via.placeholder.com/150'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                             </div>
-                            <span class="font-medium text-gray-700 truncate max-w-[150px]">${item.title}</span>
+                            <span class="font-bold text-gray-800 truncate max-w-[180px]">${item.title}</span>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-center font-bold text-blue-600">${item.download_count || 0}</td>
-                    <td class="px-6 py-4 text-center text-gray-500">${item.like_count || 0}</td>
-                    <td class="px-6 py-4">
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${item.type === 'video' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${item.type}</span>
+                    <td class="px-8 py-5 text-center font-black text-blue-600 tracking-tight">${item.download_count || 0}</td>
+                    <td class="px-8 py-5 text-center text-gray-500 font-semibold">${item.like_count || 0}</td>
+                    <td class="px-8 py-5">
+                        <span class="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${item.type === 'video' ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600'}">${item.type}</span>
                     </td>
-                    <td class="px-6 py-4 text-right"><button onclick="switchTab('manage')" class="text-gray-400"><i class="fas fa-chevron-right"></i></button></td>
+                    <td class="px-8 py-5 text-right"><button onclick="switchTab('manage')" class="text-gray-300 group-hover:text-blue-600 transition-colors"><i class="fas fa-arrow-right-long"></i></button></td>
                 </tr>
             `).join('');
         }
 
-        // --- CATEGORIES ---
+        // --- CATEGORY OPS ---
         async function fetchCategories() {
             const tbody = document.getElementById('categories-table-body');
-            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center italic">Updating...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="px-8 py-6 text-center italic text-gray-400">Updating registry...</td></tr>';
             const { data, error } = await supabaseClient.from('categories').select('*').order('name');
             if (error) return;
             tbody.innerHTML = data.map(cat => `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 text-gray-400 font-mono text-xs">#${cat.id}</td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
-                                ${cat.icon_url ? `<img src="${cat.icon_url}" class="w-full h-full rounded object-cover">` : `<i class="fas fa-tag"></i>`}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-8 py-4 text-gray-300 font-mono text-[10px]">#${cat.id}</td>
+                    <td class="px-8 py-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-9 h-9 rounded-xl bg-gray-50 text-gray-400 flex items-center justify-center border border-gray-100">
+                                ${cat.icon_url ? `<img src="${cat.icon_url}" class="w-full h-full rounded-xl object-cover">` : `<i class="fas fa-link text-xs"></i>`}
                             </div>
                             <span class="font-bold text-gray-800">${cat.name}</span>
                         </div>
                     </td>
-                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-full text-[10px] bg-green-100 text-green-700 font-bold uppercase">Active</span></td>
-                    <td class="px-6 py-4 text-right"><button onclick="deleteCategory(${cat.id})" class="text-red-400"><i class="fas fa-trash-alt"></i></button></td>
+                    <td class="px-8 py-4"><span class="flex items-center gap-1.5 text-[9px] font-black text-emerald-500 uppercase tracking-widest"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Active</span></td>
+                    <td class="px-8 py-4 text-right">
+                        <button onclick="deleteCategory(${cat.id})" class="w-8 h-8 rounded-lg text-red-400 hover:bg-red-50 transition-all"><i class="fas fa-trash-can text-xs"></i></button>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -430,11 +463,16 @@
             };
             const { error } = await supabaseClient.from('categories').insert([payload]);
             if (error) showToast(error.message, false);
-            else { showToast("Category Added!"); document.getElementById('category-form').reset(); fetchCategories(); fetchStats(); }
+            else { 
+                showToast("Category Registered"); 
+                document.getElementById('category-form').reset(); 
+                fetchCategories(); 
+                fetchStats(); 
+            }
         });
 
         window.deleteCategory = async function(id) {
-            if (!confirm('Dhyan rahe: isse statuses par asar ho sakta hai. Delete karein?')) return;
+            if (!confirm('Warning: Deleting a node might orphan associated assets. Proceed?')) return;
             await supabaseClient.from('categories').delete().eq('id', id);
             fetchCategories(); fetchStats();
         };
@@ -442,10 +480,10 @@
         async function populateCategorySelect() {
             const { data } = await supabaseClient.from('categories').select('id, name').eq('is_active', true);
             const select = document.getElementById('form-category-select');
-            if (data) select.innerHTML = '<option value="">Choose Category</option>' + data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            if (data) select.innerHTML = '<option value="">Select Node</option>' + data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         }
 
-        // --- STATUS SUBMISSION (UPDATED LOGIC) ---
+        // --- ASSET DEPLOYMENT ---
         document.getElementById('status-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
@@ -456,7 +494,7 @@
             const fileUrl = document.getElementById('form-file-url').value;
             let thumbUrl = document.getElementById('form-thumb-url').value;
 
-            // Image type ke liye thumb url file url wala hi hoga
+            // Inheritance logic: If Image, Poster = Source
             if (type === 'image') {
                 thumbUrl = fileUrl;
             }
@@ -478,37 +516,37 @@
             if (error) {
                 showToast(error.message, false);
             } else {
-                showToast("Status Published!");
+                showToast("Asset Deployed Successfully");
                 document.getElementById('status-form').reset();
                 toggleThumbVisibility();
                 switchTab('dashboard');
                 initApp();
             }
             btn.disabled = false;
-            btn.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> Publish Now`;
+            btn.innerHTML = `<i class="fas fa-rocket"></i> Finalize Deployment`;
         });
 
-        // --- MANAGE ---
+        // --- INVENTORY VIEW ---
         window.fetchStatuses = async function() {
             const grid = document.getElementById('manage-grid');
-            grid.innerHTML = '<div class="col-span-full py-20 flex justify-center"><div class="loader w-10 h-10 border-4 border-blue-100 rounded-full"></div></div>';
+            grid.innerHTML = '<div class="col-span-full py-40 flex flex-col items-center gap-4 text-gray-300"><div class="loader w-12 h-12 border-4 border-blue-50 rounded-full"></div><p class="text-xs font-bold uppercase tracking-[0.2em]">Polling Server...</p></div>';
             const { data, error } = await supabaseClient.from('statuses').select('*').order('created_at', { ascending: false });
             if (error) return;
             grid.innerHTML = data.map(item => `
-                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden group hover:shadow-md transition-all">
-                    <div class="relative aspect-square bg-gray-100">
-                        <img src="${item.thumbnail_url || item.file_url}" onerror="this.src='https://via.placeholder.com/300'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                        <div class="absolute top-2 right-2 bg-black/50 backdrop-blur px-2 py-1 rounded text-[10px] text-white">${item.type}</div>
+                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
+                    <div class="relative aspect-[4/5] bg-gray-50 overflow-hidden">
+                        <img src="${item.thumbnail_url || item.file_url}" onerror="this.src='https://via.placeholder.com/300'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-2.5 py-1 rounded-lg text-[9px] font-black text-gray-900 uppercase tracking-widest shadow-sm border border-gray-100">${item.type}</div>
                     </div>
-                    <div class="p-4">
-                        <h4 class="font-semibold text-gray-800 truncate text-sm mb-2">${item.title}</h4>
-                        <div class="flex items-center justify-between text-xs text-gray-500">
-                            <span><i class="fas fa-download mr-1"></i> ${item.download_count || 0}</span>
-                            <span><i class="fas fa-history mr-1"></i> ${new Date(item.created_at).toLocaleDateString()}</span>
+                    <div class="p-6">
+                        <h4 class="font-bold text-gray-900 truncate text-sm mb-3">${item.title}</h4>
+                        <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                            <span class="flex items-center gap-1.5"><i class="fas fa-cloud-arrow-down text-blue-500"></i> ${item.download_count || 0}</span>
+                            <span class="flex items-center gap-1.5"><i class="fas fa-calendar-day"></i> ${new Date(item.created_at).toLocaleDateString()}</span>
                         </div>
-                        <div class="mt-4 pt-4 border-t border-gray-50 flex gap-2">
-                            <button onclick="deleteStatus(${item.id})" class="flex-1 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100">Delete</button>
-                            <button class="px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg text-xs hover:bg-gray-100"><i class="fas fa-edit"></i></button>
+                        <div class="mt-6 flex gap-3">
+                            <button onclick="deleteStatus(${item.id})" class="flex-1 py-2.5 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-colors">Purge</button>
+                            <button class="px-4 py-2.5 bg-gray-50 text-gray-400 rounded-xl text-[10px] hover:bg-gray-100 transition-colors"><i class="fas fa-sliders"></i></button>
                         </div>
                     </div>
                 </div>
@@ -516,7 +554,7 @@
         }
 
         window.deleteStatus = async function(id) {
-            if (!confirm('Status mita dein?')) return;
+            if (!confirm('Permanent deletion requested. Execute purge?')) return;
             await supabaseClient.from('statuses').delete().eq('id', id);
             fetchStatuses(); fetchStats(); fetchMostDownloaded();
         };
@@ -524,13 +562,15 @@
         window.showToast = function(msg, isSuccess = true) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-msg').innerText = msg;
-            document.getElementById('toast-icon').className = isSuccess ? "fas fa-check-circle text-green-400" : "fas fa-times-circle text-red-400";
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+            document.getElementById('toast-icon').className = isSuccess ? "fas fa-check text-emerald-400 text-xs" : "fas fa-xmark text-rose-400 text-xs";
+            document.getElementById('toast-icon-bg').className = isSuccess ? "w-8 h-8 rounded-full flex items-center justify-center bg-emerald-500/10" : "w-8 h-8 rounded-full flex items-center justify-center bg-rose-500/10";
+            
+            toast.classList.remove('translate-y-32', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-32', 'opacity-0'), 4000);
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('admin_logged_in') === 'true') showApp();
+            if (localStorage.getItem('admin_session_active') === 'true') showApp();
         });
     </script>
 </body>
